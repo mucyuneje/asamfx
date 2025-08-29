@@ -25,7 +25,7 @@ export default function Navbar() {
   return (
     <nav className="fixed w-full z-50 bg-background/90 backdrop-blur-md shadow-sm border-b border-border transition-colors duration-500">
       <div className="w-full max-w-7xl 2xl:max-w-[1600px] mx-auto px-6 py-4 flex justify-between items-center">
-        <div className="text-2xl font-bold">AsamForexAcademy</div>
+        <div className="text-2xl font-bold">AsamFXAcademy</div>
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center space-x-6">

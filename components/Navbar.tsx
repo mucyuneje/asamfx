@@ -20,7 +20,7 @@ export default function Navbar() {
     document.documentElement.classList.toggle("dark", !dark);
   };
 
-  const navLinks = ["Home", "Signals", "Course", "Mentorship"];
+  const navLinks = ["Home", "Signals", "Courses", "Mentorship"];
 
   return (
     <nav className="fixed w-full z-50 bg-background/90 backdrop-blur-md shadow-sm border-b border-border transition-colors duration-500">

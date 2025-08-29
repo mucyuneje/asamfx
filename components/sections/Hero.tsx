@@ -28,13 +28,13 @@ export default function Hero() {
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start lg:justify-center">
-          <button className="px-5 py-2 rounded transition text-base md:text-lg xl:text-xl
+          <a href="#mentorship" className="px-5 py-2 rounded transition text-base md:text-lg xl:text-xl
               bg-[color:var(--primary)] text-[color:var(--primary-foreground)]
               dark:bg-[color:var(--primary)] dark:text-[color:var(--foreground)]
               hover:brightness-90"
           >
             Start Trading Today
-          </button>
+          </a>
         </div>
       </motion.div>
 

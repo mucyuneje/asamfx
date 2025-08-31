@@ -25,7 +25,7 @@ export default function ThemeToggle() {
       }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
     >
-      {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      {theme === "light" ? <Moon size={18} /> :<Sun size={18} /> }
     </motion.button>
   );
 }

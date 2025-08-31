@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "next-themes";
-import type { ReactNode } from "react";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -22,16 +21,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}
       >
-         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"  // use system theme if nothing is saved
+          enableSystem           // allow following system preference
+          storageKey="theme"     // persists theme in localStorage
+        >
+          {children}
         </ThemeProvider>
       </body>
     </html>

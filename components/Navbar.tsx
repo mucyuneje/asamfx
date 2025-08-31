@@ -3,24 +3,21 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon, Menu, X } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  // Initialize theme based on user preference
-  useEffect(() => {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setDark(prefersDark);
-    document.documentElement.classList.toggle("dark", prefersDark);
-  }, []);
-
-  const toggleTheme = () => {
-    setDark(!dark);
-    document.documentElement.classList.toggle("dark", !dark);
-  };
+  // Fix hydration mismatch
+  useEffect(() => setMounted(true), []);
 
   const navLinks = ["Home", "Signals", "Courses", "Mentorship"];
+
+  if (!mounted) return null; // avoid SSR mismatch
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <nav className="fixed w-full z-50 bg-background/90 backdrop-blur-md shadow-sm border-b border-border transition-colors duration-500">
@@ -46,14 +43,14 @@ export default function Navbar() {
             Join Now
           </button>
           <button onClick={toggleTheme} className="ml-4">
-            {dark ? <Sun /> : <Moon />}
+            {theme === "dark" ? <Sun /> : <Moon />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center">
           <button onClick={toggleTheme} className="mr-4">
-            {dark ? <Sun /> : <Moon />}
+            {theme === "dark" ? <Sun /> : <Moon />}
           </button>
           <button onClick={() => setOpen(!open)}>
             {open ? <X /> : <Menu />}

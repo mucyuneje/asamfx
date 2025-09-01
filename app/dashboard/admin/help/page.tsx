@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ASAM_SIDEBAR } from "@/components/dashboard/data";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -7,6 +9,23 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { IconHelp, IconVideo, IconPackage, IconCoin, IconUser, IconSettings } from "@tabler/icons-react";
 
 export default function HelpPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  // Client-side auth check
+  useEffect(() => {
+    fetch("/api/me")
+      .then(async (res) => {
+        if (res.status === 401) return router.push("/login");
+        const data = await res.json();
+        if (data.role !== "ADMIN") return router.push("/dashboard/user");
+        setLoading(false);
+      })
+      .catch(() => router.push("/login"));
+  }, [router]);
+
+  if (loading) return <p className="p-6">Checking authentication...</p>;
+
   return (
     <DashboardLayout sidebarData={ASAM_SIDEBAR}>
       <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">

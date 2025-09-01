@@ -1,9 +1,9 @@
-// app/dashboard/asam/videos/manage/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ASAM_SIDEBAR } from "@/components/dashboard/data";
-import { useState } from "react";
 import { IconEdit, IconTrash, IconUpload } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -40,7 +40,22 @@ const MOCK_VIDEOS: Video[] = [
 ];
 
 export default function VideoManagementPage() {
-  const [videos, setVideos] = useState(MOCK_VIDEOS);
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [videos, setVideos] = useState<Video[]>([]);
+
+  // Client-side auth check
+  useEffect(() => {
+    fetch("/api/me")
+      .then(async (res) => {
+        if (res.status === 401) return router.push("/auth/login");
+        const data = await res.json();
+        if (data.role !== "ASAM") return router.push("/dashboard/user");
+        setVideos(MOCK_VIDEOS); // Load mock videos after auth
+        setLoading(false);
+      })
+      .catch(() => router.push("/auth/login"));
+  }, [router]);
 
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this video?")) {
@@ -48,12 +63,14 @@ export default function VideoManagementPage() {
     }
   };
 
+  if (loading) return <p className="p-6">Checking authentication...</p>;
+
   return (
     <DashboardLayout sidebarData={ASAM_SIDEBAR}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Video Management</h1>
         <Link
-          href="/dashboard/admin/videos/upload"
+          href="/dashboard/asam/videos/upload"
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:brightness-90 transition"
         >
           <IconUpload className="w-5 h-5" />
@@ -67,7 +84,6 @@ export default function VideoManagementPage() {
             key={video.id}
             className="bg-card border border-border rounded-lg overflow-hidden shadow hover:shadow-md transition"
           >
-            {/* Thumbnail */}
             <div className="w-full h-40 relative">
               <img
                 src={video.thumbnail || "/thumbnails/placeholder.jpg"}
@@ -76,14 +92,12 @@ export default function VideoManagementPage() {
               />
             </div>
 
-            {/* Video Info */}
             <div className="p-4 flex flex-col space-y-2">
               <h2 className="font-semibold text-lg">{video.title}</h2>
               <p className="text-sm text-muted-foreground">{video.category}</p>
               <p className="text-sm font-medium">Price: ${video.price}</p>
               <p className="text-xs text-muted-foreground">Uploaded: {video.createdAt}</p>
 
-              {/* Action Buttons */}
               <div className="flex space-x-2 mt-2">
                 {video.playbackId && (
                   <a

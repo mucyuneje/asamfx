@@ -6,27 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import ThemeToggleButton from "@/components/ThemeToggle";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    console.log("Register data:", form);
-    // call backend API
+
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(form),
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await res.json();
+
+    if (data.userId) {
+      alert("Registered successfully! Please login.");
+      router.push("/login");
+    } else {
+      alert(data.error || "Registration failed");
+    }
   };
 
   return (
@@ -59,9 +68,7 @@ export default function RegisterPage() {
 
         <p className="mt-4 text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary underline">
-            Sign In
-          </Link>
+          <Link href="/login" className="text-primary underline">Sign In</Link>
         </p>
       </div>
     </div>

@@ -1,9 +1,8 @@
 // app/dashboard/asam/payments/page.tsx
-"use client";
-
+import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ASAM_SIDEBAR } from "@/components/dashboard/data";
-import { useState } from "react";
+import { getCurrentUser } from "@/lib/auth";
 
 interface Payment {
   id: number;
@@ -19,14 +18,18 @@ const MOCK_PAYMENTS: Payment[] = [
   { id: 3, user: "Student C", type: "MOBILE_MONEY", amount: 10, status: "CONFIRMED" },
 ];
 
-export default function PaymentsPage() {
-  const [payments, setPayments] = useState(MOCK_PAYMENTS);
+export default async function PaymentsPage() {
+  const user = await getCurrentUser();
 
-  const updateStatus = (id: number, status: "CONFIRMED" | "REJECTED") => {
-    setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    );
-  };
+  // 🚨 Redirect if not logged in
+  if (!user) {
+    redirect("/login");
+  }
+
+  // 🚨 Redirect if not ASAM / ADMIN
+  if (user.role !== "ADMIN") {
+    redirect("/dashboard/user");
+  }
 
   return (
     <DashboardLayout sidebarData={ASAM_SIDEBAR}>
@@ -44,7 +47,7 @@ export default function PaymentsPage() {
             </tr>
           </thead>
           <tbody>
-            {payments.map((payment) => (
+            {MOCK_PAYMENTS.map((payment) => (
               <tr key={payment.id} className="hover:bg-accent/5 transition-colors">
                 <td className="p-2 border-b border-border">{payment.user}</td>
                 <td className="p-2 border-b border-border">{payment.type}</td>
@@ -53,16 +56,10 @@ export default function PaymentsPage() {
                 <td className="p-2 border-b border-border space-x-2">
                   {payment.status === "PENDING" && (
                     <>
-                      <button
-                        onClick={() => updateStatus(payment.id, "CONFIRMED")}
-                        className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                      >
+                      <button className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">
                         Confirm
                       </button>
-                      <button
-                        onClick={() => updateStatus(payment.id, "REJECTED")}
-                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
+                      <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                         Reject
                       </button>
                     </>

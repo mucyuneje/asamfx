@@ -1,17 +1,21 @@
-// components/dashboard/TopBar.tsx
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import ThemeToggleButton from "../ThemeToggle";
 
 export default function TopBar() {
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Convert pathname to readable title
   const pathSegments = pathname?.split("/").filter(Boolean) || [];
   const pageTitle = pathSegments.length > 0
     ? pathSegments[pathSegments.length - 1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Dashboard";
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  };
 
   return (
     <header className="w-full h-16 flex items-center justify-between px-6 bg-background border-b border-border text-foreground">
@@ -25,6 +29,12 @@ export default function TopBar() {
       </div>
       <div className="flex items-center space-x-4">
         <ThemeToggleButton />
+        <button
+          onClick={handleLogout}
+          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+        >
+          Logout
+        </button>
       </div>
     </header>
   );

@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ASAM_SIDEBAR } from "@/components/dashboard/data";
-import { useState } from "react";
 import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 
+// Mock kits
 interface Kit {
   id: number;
   title: string;
@@ -15,7 +17,6 @@ interface Kit {
   createdAt: string;
 }
 
-// Mock kits
 const MOCK_KITS: Kit[] = [
   {
     id: 1,
@@ -36,13 +37,29 @@ const MOCK_KITS: Kit[] = [
 ];
 
 export default function KitManagementPage() {
+  const router = useRouter();
   const [kits, setKits] = useState(MOCK_KITS);
+  const [loading, setLoading] = useState(true);
+
+  // Client-side auth check
+  useEffect(() => {
+    fetch("/api/me")
+      .then(async (res) => {
+        if (res.status === 401) router.push("/login");
+        const data = await res.json();
+        if (data.role !== "ADMIN") router.push("/dashboard/user");
+        setLoading(false);
+      })
+      .catch(() => router.push("/login"));
+  }, [router]);
 
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this kit?")) {
       setKits((prev) => prev.filter((k) => k.id !== id));
     }
   };
+
+  if (loading) return <p className="p-6">Checking authentication...</p>;
 
   return (
     <DashboardLayout sidebarData={ASAM_SIDEBAR}>
@@ -95,10 +112,7 @@ export default function KitManagementPage() {
       {kits.length === 0 && (
         <div className="text-center text-muted-foreground mt-10">
           No kits available.{" "}
-          <Link
-            href="/dashboard/asam/kits"
-            className="text-primary underline"
-          >
+          <Link href="/dashboard/admin/kits/create" className="text-primary underline">
             Create your first kit
           </Link>
         </div>

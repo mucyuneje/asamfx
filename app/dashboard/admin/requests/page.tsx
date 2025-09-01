@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ASAM_SIDEBAR } from "@/components/dashboard/data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { IconSearch, IconSortAscending, IconSortDescending, IconX } from "@tabler/icons-react";
+import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
 
-// Mock requests (replace with Prisma fetch later)
+// Mock requests
 interface Request {
   id: number;
   user: string;
@@ -31,10 +32,28 @@ const MOCK_REQUESTS: Request[] = [
 ];
 
 export default function RequestsPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  // Auth state
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [drawerRequest, setDrawerRequest] = useState<Request | null>(null);
+
+  // Client-side auth check
+  useEffect(() => {
+    fetch("/api/me")
+      .then(async (res) => {
+        if (res.status === 401) return router.push("/login");
+        const data = await res.json();
+        if (data.role !== "ADMIN") return router.push("/dashboard/user");
+        setLoading(false);
+      })
+      .catch(() => router.push("/login"));
+  }, [router]);
+
+  if (loading) return <p className="p-6">Checking authentication...</p>;
 
   // Filtered and sorted requests
   const filteredRequests = useMemo(() => {

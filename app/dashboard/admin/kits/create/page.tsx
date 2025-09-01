@@ -2,12 +2,13 @@
 
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ASAM_SIDEBAR } from "@/components/dashboard/data";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Mock videos (replace with Prisma fetch later)
 const MOCK_VIDEOS = [
@@ -21,6 +22,31 @@ export default function CreateKitPage() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [selectedVideos, setSelectedVideos] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // ✅ Check auth when page loads
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) {
+          router.push("/login"); // Not logged in → redirect
+          return;
+        }
+        const user = await res.json();
+        if (user.role !== "ADMIN") {
+          router.push("/dashboard/user"); // Normal user → redirect
+          return;
+        }
+        setLoading(false); // Auth passed
+      } catch (err) {
+        router.push("/login");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const handleToggleVideo = (id: number) => {
     setSelectedVideos((prev) =>
@@ -37,6 +63,11 @@ export default function CreateKitPage() {
     setPrice("");
     setSelectedVideos([]);
   };
+
+  // ✅ Don’t render until auth check is complete
+  if (loading) {
+    return <p className="p-6">Checking authentication...</p>;
+  }
 
   return (
     <DashboardLayout sidebarData={ASAM_SIDEBAR}>

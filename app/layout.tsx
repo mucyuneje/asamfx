@@ -1,8 +1,10 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
+import { SessionProviderWrapper } from "./SessionProviderWrapper";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -25,16 +27,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-      suppressHydrationWarning
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"  // use system theme if nothing is saved
-          enableSystem           // allow following system preference
-          storageKey="theme"     // persists theme in localStorage
+          defaultTheme="system"
+          enableSystem
+          storageKey="theme"
         >
-          {children}
+          <SessionProviderWrapper>
+            {children}
+            <Toaster position="top-right" />
+          </SessionProviderWrapper>
         </ThemeProvider>
       </body>
     </html>

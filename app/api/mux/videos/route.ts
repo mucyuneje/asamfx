@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import  prisma  from "@/lib/prisma";
 import Mux from "@mux/mux-node";
 
 const { MUX_TOKEN_ID, MUX_TOKEN_SECRET } = process.env;

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ThemeToggle from "@/components/ThemeToggle"
+import { Progress } from "@/components/ui/progress" // your full-page loader
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("")
@@ -15,7 +16,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession() // track session loading
 
   // Redirect if logged in
   useEffect(() => {
@@ -44,8 +45,19 @@ export default function RegisterPage() {
     }
   }
 
+  // Show full-page progress while session is loading or registration request is ongoing
+  if (status === "loading" || loading) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-200">
+        <div className="w-2/3 max-w-lg">
+          <Progress value={50} className="h-6" /> {/* you can animate value if needed */}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-200 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="flex justify-between items-center">
           <CardTitle>Register</CardTitle>
@@ -87,7 +99,7 @@ export default function RegisterPage() {
               />
             </div>
             <Button type="submit" disabled={loading}>
-              {loading ? "Registering..." : "Register"}
+              Register
             </Button>
             <p className="text-sm text-center text-muted-foreground mt-2">
               Already have an account?{" "}

@@ -1,8 +1,17 @@
-// app/SessionProviderWrapper.tsx
-"use client"
+"use client";
 
-import { SessionProvider } from "next-auth/react"
+import { SessionProvider } from "next-auth/react";
+import { Toaster } from "react-hot-toast";
 
-export function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>
+interface Props {
+  children: React.ReactNode;
+}
+
+export function SessionProviderWrapper({ children }: Props) {
+  return (
+    <SessionProvider>
+      {children}
+      <Toaster position="top-right" />
+    </SessionProvider>
+  );
 }

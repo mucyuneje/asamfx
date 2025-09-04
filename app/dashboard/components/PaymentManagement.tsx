@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 type Payment = {
   id: string;
@@ -26,11 +27,11 @@ export default function PaymentTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Fetch payments from backend API
+  // Fetch payments
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/payments"); // <-- replace with your real API endpoint
+      const res = await fetch("/api/admin/payments");
       if (!res.ok) throw new Error("Failed to fetch payments");
       const data: Payment[] = await res.json();
       setPayments(data);
@@ -45,7 +46,6 @@ export default function PaymentTable() {
     fetchPayments();
   }, []);
 
-  // Update payment status via API
   const handleUpdateStatus = async (id: string, status: "APPROVED" | "REJECTED") => {
     try {
       const res = await fetch(`/api/admin/payments/${id}/status`, {
@@ -64,13 +64,15 @@ export default function PaymentTable() {
     }
   };
 
-  const getStatusColor = (status: Payment["status"]) => {
+  const getStatusClass = (status: Payment["status"]) => {
     switch (status) {
-      case "APPROVED": return "success";
-      case "REJECTED": return "destructive";
-      case "PENDING": return "primary";
+      case "APPROVED": return "text-green-600 font-semibold";
+      case "PENDING": return "text-blue-600 font-semibold";
+      case "REJECTED": return "text-red-600 font-semibold";
     }
   };
+
+  const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 
   const filteredPayments = useMemo(() => {
     let data = [...payments];
@@ -92,13 +94,16 @@ export default function PaymentTable() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  if (loading) return <p>Loading payments...</p>;
-
   return (
     <div className="space-y-6 p-4">
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Input placeholder="Search by user or video" value={search} onChange={e => setSearch(e.target.value)} className="flex-1" />
+        <Input
+          placeholder="Search by user or video"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1"
+        />
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Filter by status" /></SelectTrigger>
           <SelectContent>
@@ -122,17 +127,36 @@ export default function PaymentTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedPayments.map(payment => (
-            <TableRow key={payment.id} className="cursor-pointer hover:bg-muted" onClick={() => setSelectedPayment(payment)}>
-              <TableCell>{payment.user.name}</TableCell>
-              <TableCell>{payment.user.email}</TableCell>
-              <TableCell>{payment.video.title}</TableCell>
-              <TableCell>
-                <Badge variant={getStatusColor(payment.status)}>{payment.status}</Badge>
-              </TableCell>
-              <TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
-            </TableRow>
-          ))}
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+              </TableRow>
+            ))
+          ) : (
+            paginatedPayments.map(payment => (
+              <motion.tr
+                key={payment.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="cursor-pointer hover:bg-muted"
+                onClick={() => setSelectedPayment(payment)}
+              >
+                <TableCell>{payment.user.name}</TableCell>
+                <TableCell>{payment.user.email}</TableCell>
+                <TableCell>{payment.video.title}</TableCell>
+                <TableCell>
+                  <span className={getStatusClass(payment.status)}>{capitalize(payment.status)}</span>
+                </TableCell>
+                <TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+              </motion.tr>
+            ))
+          )}
         </TableBody>
       </Table>
 
@@ -154,34 +178,55 @@ export default function PaymentTable() {
 
       {/* Full-Screen Modal */}
       {selectedPayment && (
-        <div className="fixed inset-0 z-50 flex justify-center items-start bg-black/80 p-6 overflow-auto">
-          <div className="bg-background rounded-xl shadow-2xl w-full max-w-6xl p-8 flex flex-col gap-6 relative">
-            <button className="absolute top-6 right-6 text-4xl font-bold" onClick={() => setSelectedPayment(null)}>✕</button>
+        <motion.div
+          className="fixed inset-0 z-50 flex justify-center items-center bg-black/80 p-6 overflow-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="bg-background rounded-xl shadow-2xl w-full max-w-3xl p-6 flex flex-col gap-6 relative"
+          >
+            <button className="absolute top-4 right-4 text-3xl font-bold" onClick={() => setSelectedPayment(null)}>✕</button>
 
-            <h2 className="text-4xl font-bold">{selectedPayment.video.title}</h2>
-            <Badge variant={getStatusColor(selectedPayment.status)} className="mb-4 text-lg">{selectedPayment.status}</Badge>
+            <h2 className="text-2xl font-bold">{selectedPayment.video.title}</h2>
+            <span className={getStatusClass(selectedPayment.status) + " mb-4 text-base"}>
+              {capitalize(selectedPayment.status)}
+            </span>
 
-            <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col md:flex-row gap-4">
               <img
                 src={selectedPayment.proofUrl}
                 alt="Payment Proof"
-                className="w-full md:w-2/5 rounded-lg shadow-lg object-cover max-h-[600px]"
+                className="w-full md:w-2/5 rounded-lg shadow-lg object-cover max-h-[400px]"
               />
-              <div className="flex-1 flex flex-col gap-4">
-                <p className="text-lg"><strong>Requested By:</strong> {selectedPayment.user.name} ({selectedPayment.user.email})</p>
-                <p className="text-lg"><strong>Description:</strong> {selectedPayment.description}</p>
-                <p className="text-lg"><strong>Requested On:</strong> {new Date(selectedPayment.createdAt).toLocaleString()}</p>
+              <div className="flex-1 flex flex-col gap-2 text-sm">
+                <p><strong>Requested By:</strong> {selectedPayment.user.name} ({selectedPayment.user.email})</p>
+                <p><strong>Description:</strong> {selectedPayment.description}</p>
+                <p><strong>Requested On:</strong> {new Date(selectedPayment.createdAt).toLocaleString()}</p>
 
                 {selectedPayment.status === "PENDING" && (
-                  <div className="flex gap-4 mt-6">
-                    <Button variant="success" size="lg" onClick={() => handleUpdateStatus(selectedPayment.id, "APPROVED")}>Approve</Button>
-                    <Button variant="destructive" size="lg" onClick={() => handleUpdateStatus(selectedPayment.id, "REJECTED")}>Reject</Button>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      className="bg-green-600 text-white hover:bg-green-500 flex-1"
+                      onClick={() => { handleUpdateStatus(selectedPayment.id, "APPROVED"); setSelectedPayment(null); }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      className="bg-red-600 text-white hover:bg-red-500 flex-1"
+                      onClick={() => { handleUpdateStatus(selectedPayment.id, "REJECTED"); setSelectedPayment(null); }}
+                    >
+                      Reject
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

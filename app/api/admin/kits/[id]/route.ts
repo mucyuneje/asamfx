@@ -1,6 +1,6 @@
 // app/api/admin/kits/[id]/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import  prisma  from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -61,5 +61,31 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to delete kit" }, { status: 500 });
+  }
+}
+export async function GET() {
+  try {
+    const kits = await prisma.kit.findMany({
+      include: {
+        kitVideos: {
+          include: { video: true }, // include the full video object
+        },
+        kitPurchases: true, // if you need purchases info
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Map kitVideos to a flat videos array for frontend convenience
+    const mappedKits = kits.map(k => ({
+      ...k,
+      videos: k.kitVideos?.map(kv => kv.video) || [],
+    }));
+
+    return NextResponse.json(mappedKits);
+  } catch (err) {
+    console.error("GET kits error:", err);
+    return NextResponse.json({ error: "Failed to fetch kits" }, { status: 500 });
   }
 }

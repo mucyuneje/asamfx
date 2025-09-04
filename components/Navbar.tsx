@@ -1,23 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, Menu, X } from "lucide-react";
+import { Sun, Moon, Menu, X, LogOut, User } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { data: session, status } = useSession();
 
   // Fix hydration mismatch
   useEffect(() => setMounted(true), []);
 
-  const navLinks = ["Home", "Signals", "Courses", "Mentorship"];
-
   if (!mounted) return null; // avoid SSR mismatch
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  const isSignedIn = session?.user;
+
+  const navLinks = ["Home", "Signals", "Courses", "Mentorship"];
 
   return (
     <nav className="fixed w-full z-50 bg-background/90 backdrop-blur-md shadow-sm border-b border-border transition-colors duration-500">
@@ -35,13 +37,31 @@ export default function Navbar() {
               {link}
             </a>
           ))}
-          <button
-            className="px-4 py-2 rounded transition
-            bg-[color:var(--primary)] text-[color:var(--primary-foreground)]
-            hover:brightness-90"
-          >
-            Join Now
-          </button>
+
+          {isSignedIn ? (
+            <>
+              <a
+                href="/dashboard"
+                className="flex items-center px-4 py-2 rounded bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:brightness-90 transition"
+              >
+                <User className="mr-2" /> {session.user?.name || "Account"}
+              </a>
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex items-center px-4 py-2 rounded bg-destructive text-destructive-foreground hover:brightness-90 transition"
+              >
+                <LogOut className="mr-2" /> Logout
+              </button>
+            </>
+          ) : (
+            <a
+              href="/login"
+              className="px-4 py-2 rounded transition bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:brightness-90"
+            >
+              Join Now
+            </a>
+          )}
+
           <button onClick={toggleTheme} className="ml-4">
             {theme === "dark" ? <Sun /> : <Moon />}
           </button>
@@ -52,42 +72,48 @@ export default function Navbar() {
           <button onClick={toggleTheme} className="mr-4">
             {theme === "dark" ? <Sun /> : <Moon />}
           </button>
-          <button onClick={() => setOpen(!open)}>
-            {open ? <X /> : <Menu />}
-          </button>
+          <button onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
       </div>
 
       {/* Mobile Menu Animate */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden bg-background/95 border-t border-border overflow-hidden"
-          >
-            <div className="flex flex-col space-y-4 p-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link}
-                  href={`#${link.toLowerCase()}`}
-                  className="hover:text-primary transition-colors"
-                >
-                  {link}
-                </a>
-              ))}
-              <button
-                className="px-4 py-2 rounded transition
-                bg-[color:var(--primary)] text-[color:var(--primary-foreground)]
-                hover:brightness-90"
+      {open && (
+        <div className="md:hidden bg-background/95 border-t border-border overflow-hidden p-4 flex flex-col space-y-4">
+          {navLinks.map((link) => (
+            <a
+              key={link}
+              href={`#${link.toLowerCase()}`}
+              className="hover:text-primary transition-colors"
+            >
+              {link}
+            </a>
+          ))}
+
+          {isSignedIn ? (
+            <>
+              <a
+                href="/dashboard"
+                className="flex items-center px-4 py-2 rounded bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:brightness-90 transition"
               >
-                Join Now
+                <User className="mr-2" /> {session.user?.name || "Account"}
+              </a>
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex items-center px-4 py-2 rounded bg-destructive text-destructive-foreground hover:brightness-90 transition"
+              >
+                <LogOut className="mr-2" /> Logout
               </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </>
+          ) : (
+            <a
+              href="/login"
+              className="px-4 py-2 rounded transition bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:brightness-90"
+            >
+              Join Now
+            </a>
+          )}
+        </div>
+      )}
     </nav>
   );
 }

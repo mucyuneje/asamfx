@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const kitId = params.id;
-  const { videoId } = await req.json();
-
-  if (!videoId) return NextResponse.json({ error: "Missing videoId" }, { status: 400 });
-
+export async function POST(req: NextRequest, context: { params: { id: string } }) {
   try {
-    const kit = await prisma.kit.update({
+    const { id: kitId } = await context.params; // Await params
+    const { videoId } = await req.json();
+
+    if (!videoId) {
+      return NextResponse.json({ error: "Missing videoId" }, { status: 400 });
+    }
+
+    const updatedKit = await prisma.kit.update({
       where: { id: kitId },
       data: {
-        videos: {
-          deleteMany: { videoId } // <-- Use deleteMany here
-        }
+        kitVideos: {
+          deleteMany: { videoId }, // Correct relation name
+        },
       },
-      include: { videos: true }
+      include: {
+        kitVideos: { include: { video: true } },
+      },
     });
 
-    return NextResponse.json(kit);
+    return NextResponse.json(updatedKit);
   } catch (err) {
-    console.error(err);
+    console.error("Failed to remove video from kit:", err);
     return NextResponse.json({ error: "Failed to remove video" }, { status: 500 });
   }
 }

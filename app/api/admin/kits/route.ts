@@ -1,13 +1,14 @@
 import { NextResponse, NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import fs from "fs";
 import path from "path";
 
-// POST: Create a new kit
+// POST: Create a new Kit
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
+
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -23,14 +24,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // Save thumbnail locally
+    // Save thumbnail
     const uploadDir = path.join(process.cwd(), "public/uploads");
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-    const filePath = path.join(uploadDir, thumbnail.name);
-    const arrayBuffer = await thumbnail.arrayBuffer();
-    fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
-    const thumbnailUrl = `/uploads/${thumbnail.name}`;
+    const uniqueFileName = `${Date.now()}-${thumbnail.name}`;
+    const filePath = path.join(uploadDir, uniqueFileName);
+    const buffer = Buffer.from(await thumbnail.arrayBuffer());
+    fs.writeFileSync(filePath, buffer);
+
+    const thumbnailUrl = `/uploads/${uniqueFileName}`;
 
     // Create Kit with videos
     const kit = await prisma.kit.create({
@@ -39,28 +42,40 @@ export async function POST(req: NextRequest) {
         price,
         thumbnail: thumbnailUrl,
         createdBy: session.user.id,
-        videos: { create: videoIds.map(id => ({ videoId: id })) },
+        kitVideos: {
+          create: videoIds.map((videoId) => ({ videoId })),
+        },
       },
-      include: { videos: { include: { video: true } } },
+      include: {
+        kitVideos: { include: { video: true } },
+        kitPurchases: true,
+      },
     });
 
     return NextResponse.json(kit);
   } catch (err) {
-    console.error(err);
+    console.error("POST /kits error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
 // GET: Fetch all kits
 export async function GET() {
   try {
     const kits = await prisma.kit.findMany({
-      include: { videos: { include: { video: true } } },
-      orderBy: { createdAt: "desc" },
+      include: {
+        kitVideos: {       // ✅ correct relation name
+          include: { video: true },
+        },
+        kitPurchases: true, // ✅ correct relation name
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
+
     return NextResponse.json(kits);
   } catch (err) {
-    console.error(err);
+    console.error("GET kits error:", err);
     return NextResponse.json({ error: "Failed to fetch kits" }, { status: 500 });
   }
 }

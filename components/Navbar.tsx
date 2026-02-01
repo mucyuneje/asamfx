@@ -19,7 +19,7 @@ export default function Navbar() {
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
   const isSignedIn = session?.user;
 
-  const navLinks = ["Home", "Signals", "Courses", "Mentorship"];
+  const navLinks = ["Home", "Courses", "Mentorship"];
 
   return (
     <nav className="fixed w-full z-50 bg-background/90 backdrop-blur-md shadow-sm border-b border-border transition-colors duration-500">

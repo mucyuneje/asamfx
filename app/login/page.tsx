@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ThemeToggle from "@/components/ThemeToggle"
 import { Progress } from "@/components/ui/progress"
+import toast from "react-hot-toast" // ✅ import toast
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -43,10 +44,14 @@ export default function LoginPage() {
         email,
         password,
       })
-      if (res?.ok) router.replace("/dashboard")
-      else alert(res?.error || "Login failed")
+      if (res?.ok) {
+        toast.success("Login successful!") // ✅ success toast
+        router.replace("/dashboard")
+      } else {
+        toast.error(res?.error || "Login failed") // ✅ error toast
+      }
     } catch (err) {
-      alert("Network error: " + err)
+      toast.error("Network error: " + err) // ✅ network error toast
     } finally {
       setLoading(false)
     }

@@ -62,7 +62,6 @@ export default function VideoManagement() {
   const [sortByPriceAsc, setSortByPriceAsc] = useState<null | boolean>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
-  // Fetch videos
   const fetchVideos = async () => {
     try {
       setLoading(true);
@@ -119,10 +118,19 @@ export default function VideoManagement() {
           const xhr = new XMLHttpRequest();
           xhr.open("PUT", uploadUrl, true);
           xhr.setRequestHeader("Content-Type", file.type);
+
+          // 🔹 Track progress
           xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              setProgress(percent);
+            }
           };
-          xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(`Upload failed: ${xhr.status}`));
+
+          xhr.onload = () =>
+            xhr.status >= 200 && xhr.status < 300
+              ? resolve()
+              : reject(`Upload failed: ${xhr.status}`);
           xhr.onerror = () => reject("Network error during upload");
           xhr.send(file);
         });
@@ -153,8 +161,13 @@ export default function VideoManagement() {
 
         toast.success(`Video "${title}" uploaded successfully!`);
 
-        setTitle(""); setSubtitle(""); setDescription("");
-        setCategory(""); setDifficulty(""); setPaymentMethod(""); setPrice("");
+        setTitle("");
+        setSubtitle("");
+        setDescription("");
+        setCategory("");
+        setDifficulty("");
+        setPaymentMethod("");
+        setPrice("");
         setProgress(0);
         setOpenUpload(false);
         fetchVideos();
@@ -184,14 +197,12 @@ export default function VideoManagement() {
 
   const saveEdit = async () => {
     if (!editVideo) return;
-
     try {
       await fetch(`/api/mux/videos/${editVideo.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, subtitle, description, category, difficulty, paymentMethod, price }),
       });
-
       toast.success(`Video "${title}" updated successfully!`);
     } catch (err: any) {
       console.error(err);
@@ -210,7 +221,7 @@ export default function VideoManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-semibold">Video Management</h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -233,7 +244,7 @@ export default function VideoManagement() {
         </div>
       </div>
 
-      {/* Grid View */}
+      {/* Video Grid/Table */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
@@ -264,7 +275,6 @@ export default function VideoManagement() {
                         <p className="text-sm text-muted-foreground truncate">{v.description}</p>
                         {v.difficulty && <p className="text-sm text-muted-foreground mt-1">Difficulty: {v.difficulty}</p>}
 
-                        {/* Price + Edit */}
                         <div className="flex justify-between items-center mt-2">
                           <div className="flex items-center gap-2 bg-primary/10 text-primary font-semibold text-xl px-3 py-1 rounded-full">
                             <IconCurrencyDollar size={20} /> {v.price ?? 0}
@@ -325,7 +335,7 @@ export default function VideoManagement() {
         </div>
       )}
 
-      {/* Upload & Edit Modals */}
+      {/* Upload Modal */}
       <Dialog open={openUpload} onOpenChange={setOpenUpload}>
         <DialogContent className="sm:max-w-2xl w-full">
           <DialogHeader><DialogTitle>Upload New Video</DialogTitle></DialogHeader>
@@ -346,7 +356,14 @@ export default function VideoManagement() {
             <div {...getRootProps()} className="flex flex-col items-center justify-center border-2 border-dashed rounded p-2 min-h-[300px] cursor-pointer">
               <input {...getInputProps()} />
               <p className="text-muted-foreground text-center">{isDragActive ? "Drop video here..." : "Drag & drop video, or click to browse"}</p>
-              {uploading && <div className="w-full bg-muted/30 rounded-full h-3 mt-4"><div className="bg-primary h-3 rounded-full" style={{ width: `${progress}%` }} /></div>}
+
+              {/* 🔹 Progressive Bar with percentage */}
+              {uploading && (
+                <div className="w-full bg-muted/30 rounded-full h-6 mt-4 relative">
+                  <div className="bg-primary h-6 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                  <span className="absolute inset-0 flex items-center justify-center font-semibold text-white">{progress}%</span>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="mt-4 justify-end gap-2">
@@ -355,6 +372,7 @@ export default function VideoManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Modal */}
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
         <DialogContent className="sm:max-w-2xl w-full">
           <DialogHeader><DialogTitle>Edit Video</DialogTitle></DialogHeader>

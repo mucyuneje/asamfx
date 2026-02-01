@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         name,           // <-- make sure this is a real string from req.body
         email,
         password: hashed,
-        role: role || "USER",
+        role: role || "STUDENT", // Default role if not provided
       },
     });
 

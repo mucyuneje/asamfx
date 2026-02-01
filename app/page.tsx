@@ -1,6 +1,5 @@
 import Hero from "@/components/sections/Hero";
 import Mentorship from "@/components/sections/Mentorship";
-import SignalsPlans from "@/components/sections/Signals";
 import Roadmap from "@/components/sections/Roadmap";
 import Proven from "@/components/sections/Proven";
 import Courses from "@/components/sections/Courses";
@@ -19,7 +18,6 @@ export default function Home() {
       <div className="w-full xl:max-w-7xl 2xl:max-w-[1600px] mx-auto flex flex-col items-center">
         <Hero />
         <Proven />
-        <SignalsPlans/>
         <Mentorship />
         <Courses />
         <Roadmap/>
